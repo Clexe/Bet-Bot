@@ -1,0 +1,5 @@
+{
+  "name": "Copy of BetPredict AI",
+  "description": "A sophisticated predictive sports analytics bot that uses Gemini 3 Pro and Google Search to provide real-time match predictions, goal probabilities, and betting insights based on current form and historical data.",
+  "requestFramePermissions": []
+}

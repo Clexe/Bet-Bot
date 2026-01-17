@@ -18,29 +18,46 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, isTyping]);
 
-  // Initial greeting
   useEffect(() => {
-    if (messages.length === 0) {
-      setTimeout(() => {
-        setMessages([
-          {
-            id: 'start',
-            role: 'assistant',
-            content: "👋 Welcome to BetPredict AI Bot!\n\nSend me any football match (e.g., 'Real Madrid vs Liverpool') or use the /menu for quick options."
-          }
-        ]);
-      }, 500);
+    const saved = localStorage.getItem('chat_history');
+    if (saved) {
+      setMessages(JSON.parse(saved));
+    } else {
+      setMessages([
+        {
+          id: 'start',
+          role: 'assistant',
+          content: "👋 Welcome to BetPredict AI Bot!\n\nSend me any football match (e.g., 'Real Madrid vs Liverpool') or use the /menu for quick options.\n\nI can predict outcomes, player performance, handicaps, and goal totals."
+        }
+      ]);
     }
   }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chat_history', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  const handleClearHistory = () => {
+    localStorage.removeItem('chat_history');
+    setMessages([
+      {
+        id: 'start',
+        role: 'assistant',
+        content: "Chat cleared. Send me a new match to begin analysis."
+      }
+    ]);
+    setIsMenuOpen(false);
+  };
 
   const handleSubmit = async (e?: React.FormEvent, manualQuery?: string) => {
     e?.preventDefault();
     const query = manualQuery || inputValue;
     if (!query.trim() || isTyping) return;
 
-    if (query.toLowerCase() === '/menu') {
-      setIsMenuOpen(true);
-      setInputValue('');
+    if (query === '/clear') {
+      handleClearHistory();
       return;
     }
 
@@ -59,7 +76,7 @@ const ChatInterface: React.FC = () => {
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `📊 Prediction for ${prediction.matchName}:`,
+        content: `📊 Predictive Report: ${prediction.matchName}`,
         prediction: prediction
       };
       setMessages(prev => [...prev, botMessage]);
@@ -67,7 +84,7 @@ const ChatInterface: React.FC = () => {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "❌ Sorry, I couldn't process that request. Please try again with a clear match name."
+        content: "❌ Predictive Engine Error. I couldn't synchronize real-time match data. Please try a major upcoming fixture."
       }]);
     } finally {
       setIsTyping(false);
@@ -102,8 +119,13 @@ const ChatInterface: React.FC = () => {
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="message-bubble message-in flex gap-1 items-center italic text-[#708499]">
-              <span className="animate-pulse">bot is analyzing...</span>
+            <div className="message-bubble message-in flex gap-2 items-center italic text-[#708499]">
+               <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-[#40a7e3] rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-[#40a7e3] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 bg-[#40a7e3] rounded-full animate-bounce [animation-delay:0.4s]"></span>
+               </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Syncing Data...</span>
             </div>
           </div>
         )}

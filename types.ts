@@ -5,6 +5,13 @@ export interface Market {
   probability?: number;
 }
 
+export interface PlayerProp {
+  playerName: string;
+  market: string;
+  prediction: string;
+  probability: number;
+}
+
 export interface MatchPrediction {
   matchName: string;
   probabilities: {
@@ -20,9 +27,15 @@ export interface MatchPrediction {
       "12": number;
       "X2": number;
     };
+    asianHandicap: {
+      line: string;
+      homeProb: number;
+      awayProb: number;
+    };
   };
   correctScores: Array<{ score: string; probability: number }>;
   additionalMarkets: Market[];
+  playerProps: PlayerProp[];
   variables: {
     form: string;
     h2h: string;
@@ -34,6 +47,7 @@ export interface MatchPrediction {
   suggestedBet: string;
   confidence: number;
   sources: Array<{ title: string; uri: string }>;
+  suggestedFollowUps: string[];
 }
 
 export interface ChatMessage {

@@ -12,8 +12,16 @@ export interface PlayerProp {
   probability: number;
 }
 
+export interface LiveScore {
+  homeScore: number;
+  awayScore: number;
+  status: 'live' | 'finished' | 'scheduled' | 'HT' | 'FT';
+  time?: string; // e.g., "75'"
+}
+
 export interface MatchPrediction {
   matchName: string;
+  liveScore?: LiveScore;
   probabilities: {
     homeWin: number;
     draw: number;

@@ -7,18 +7,23 @@ const MODEL_NAME = 'gemini-3-pro-preview';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const analyzeMatch = async (query: string, retries = 3): Promise<MatchPrediction> => {
-  // Strict initialization as per guidelines
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const prompt = `
     You are an advanced Predictive Sports Analytics Engine. 
     Task: Analyze the match/game request: "${query}".
     
+    CRITICAL: If the match is CURRENTLY IN PROGRESS, you must provide the live score and match minute using your search tool.
+
     You must provide a comprehensive breakdown including:
-    - Main markets (1X2, O/U 2.5, BTTS).
-    - Advanced markets (Asian Handicap, Corners O/U, Cards O/U).
-    - Player Performance (Anytime goalscorer, Player cards, Shots on target).
-    - Tactical analysis and Variable synthesis (Form, H2H, Injuries).
+    - Live Status (If applicable).
+    - Match Result (1X2) and Double Chance.
+    - Over/Under Goal Totals (0.5, 1.5, 2.5, 3.5).
+    - Correct Score Predictions (Top 3 most likely outcomes with probabilities).
+    - Asian Handicap lines (Standard main line for this specific match).
+    - Specialty Markets: Total Corners (Over/Under) and Total Cards (Over/Under).
+    - Player Performance (Anytime goalscorer, shots on target).
+    - Variable synthesis (Form, H2H, Injuries, Tactical setup).
 
     Return your response with a structured JSON block at the end enclosed in triple backticks with 'json' tag.
     Ensure all probability values are numbers between 0 and 100.
@@ -26,15 +31,20 @@ export const analyzeMatch = async (query: string, retries = 3): Promise<MatchPre
     The JSON structure MUST follow this interface:
     {
       "matchName": "Team A vs Team B",
+      "liveScore": { "homeScore": number, "awayScore": number, "status": "live"|"HT"|"FT"|"scheduled", "time": "string" },
       "probabilities": {
         "homeWin": number, "draw": number, "awayWin": number,
         "over25": number, "under25": number,
         "bttsYes": number, "bttsNo": number,
         "doubleChance": { "1X": number, "12": number, "X2": number },
-        "asianHandicap": { "line": "-0.5/+0.5", "homeProb": number, "awayProb": number }
+        "asianHandicap": { "line": "-0.5", "homeProb": number, "awayProb": number }
       },
-      "correctScores": [ { "score": "string", "probability": number } ],
-      "additionalMarkets": [ { "name": "Corners Over 9.5", "value": "string", "probability": number } ],
+      "correctScores": [ { "score": "1-0", "probability": number }, { "score": "1-1", "probability": number }, { "score": "2-1", "probability": number } ],
+      "additionalMarkets": [ 
+        { "name": "Corners", "value": "Over 9.5", "probability": number },
+        { "name": "Cards", "value": "Under 4.5", "probability": number },
+        { "name": "Goals", "value": "Over 1.5", "probability": number }
+      ],
       "playerProps": [ { "playerName": "string", "market": "Anytime Goalscorer", "prediction": "Yes", "probability": number } ],
       "variables": { "form": "string", "h2h": "string", "injuries": "string", "tactics": "string" },
       "keyFactors": ["string"],
@@ -43,7 +53,7 @@ export const analyzeMatch = async (query: string, retries = 3): Promise<MatchPre
       "suggestedFollowUps": ["What about corners?", "Any anytime goalscorers?", "Show H2H history"]
     }
 
-    Be statistical. Use Google Search for the latest lineups, form, and odds.
+    Be statistical. Use Google Search for real-time scores, team news, and market trends.
   `;
 
   let lastError;
@@ -68,28 +78,21 @@ export const analyzeMatch = async (query: string, retries = 3): Promise<MatchPre
           uri: chunk.web?.uri || '#'
         }));
 
-      // Escaping backticks in the regex to avoid "Invalid or unexpected token" errors
-      const jsonBlocks = [...text.matchAll(/\`\`\`json\n([\s\S]*?)\n\`\`\`/g)];
-      const lastJsonBlock = jsonBlocks.length > 0 ? jsonBlocks[jsonBlocks.length - 1][1] : null;
-      
       let parsedData: any = {};
-      if (lastJsonBlock) {
+      const jsonMatch = text.match(/```json\s+([\s\S]*?)\s+```/) || text.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
         try {
-          parsedData = JSON.parse(lastJsonBlock);
+          const jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
+          parsedData = JSON.parse(jsonString);
         } catch (e) {
           console.error("Failed to parse prediction JSON", e);
-        }
-      } else {
-        const objectMatch = text.match(/\{[\s\S]*\}/);
-        if (objectMatch) {
-          try {
-            parsedData = JSON.parse(objectMatch[0]);
-          } catch (e) {}
         }
       }
 
       return {
         matchName: parsedData.matchName || "Match Analysis",
+        liveScore: parsedData.liveScore,
         probabilities: parsedData.probabilities || {
           homeWin: 33, draw: 34, awayWin: 33,
           over25: 50, under25: 50,
@@ -97,11 +100,11 @@ export const analyzeMatch = async (query: string, retries = 3): Promise<MatchPre
           doubleChance: { "1X": 60, "12": 80, "X2": 40 },
           asianHandicap: { line: "0.0", homeProb: 50, awayProb: 50 }
         },
-        correctScores: parsedData.correctScores || [],
+        correctScores: (parsedData.correctScores || []).slice(0, 3),
         additionalMarkets: parsedData.additionalMarkets || [],
         playerProps: parsedData.playerProps || [],
         variables: parsedData.variables || { form: '', h2h: '', injuries: '', tactics: '' },
-        analysis: text.replace(/\`\`\`json[\s\S]*?\`\`\`/g, "").trim(),
+        analysis: text.split('```json')[0].trim(),
         keyFactors: parsedData.keyFactors || [],
         suggestedBet: parsedData.suggestedBet || "No clear suggestion",
         confidence: parsedData.confidence || 50,

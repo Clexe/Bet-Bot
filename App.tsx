@@ -1,8 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ChatInterface from './components/ChatInterface';
 
 const App: React.FC = () => {
+  const [copied, setCopied] = useState(false);
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-[#0e1621] overflow-hidden">
       {/* Telegram Header */}
@@ -21,9 +29,16 @@ const App: React.FC = () => {
             </div>
             <p className="text-[10px] text-[#64b5ef] truncate">Sports Analytics Engine</p>
           </div>
-          <div className="flex items-center gap-4 text-[#708499]">
-            <button className="hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <div className="flex items-center gap-3 text-[#708499]">
+            <button 
+              onClick={copyLink}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all ${copied ? 'text-emerald-400 bg-emerald-400/10' : 'hover:text-white hover:bg-white/5'}`}
+              title="Copy Bot Link"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              <span className="text-[10px] font-bold uppercase">{copied ? 'Copied!' : 'Share'}</span>
             </button>
             <button className="hover:text-white transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>

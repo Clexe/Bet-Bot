@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BetPredict Bot - Telegram</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BetPredict Bot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -22,10 +21,21 @@
       font-family: 'Inter', sans-serif;
       background-color: var(--tg-bg-color);
       color: var(--tg-text-color);
+      margin: 0;
+      padding: 0;
       overflow: hidden;
     }
+    /* Telegram Pattern Background */
+    .tg-wallpaper {
+      position: fixed;
+      inset: 0;
+      background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
     .tg-scrollbar::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
     }
     .tg-scrollbar::-webkit-scrollbar-track {
       background: transparent;
@@ -34,29 +44,40 @@
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
     }
+    /* Message Bubbles with Tails */
     .message-bubble {
       position: relative;
       max-width: 85%;
       padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 14.5px;
+      line-height: 1.4;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .message-in {
       background-color: var(--tg-message-in-bg);
-      border-bottom-left-radius: 4px;
+      border-radius: 12px 12px 12px 4px;
     }
     .message-out {
       background-color: var(--tg-message-out-bg);
-      border-bottom-right-radius: 4px;
+      border-radius: 12px 12px 4px 12px;
       margin-left: auto;
     }
-    .tg-pattern {
-      background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-      opacity: 0.05;
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+    .message-time {
+      font-size: 10px;
+      color: var(--tg-hint-color);
+      margin-left: 8px;
+      display: inline-block;
+      vertical-align: bottom;
+      margin-top: 4px;
+    }
+    .message-out .message-time {
+      color: rgba(255,255,255,0.6);
+    }
+    /* Custom checkmark for Telegram look */
+    .read-receipt {
+      display: inline-flex;
+      margin-left: 4px;
+      color: #78d2ff;
     }
   </style>
 <script type="importmap">
@@ -69,13 +90,14 @@
     "recharts": "https://esm.sh/recharts@2.12.7",
     "@google/genai": "https://esm.sh/@google/genai@1.37.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.1"
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
 <body>
+  <div class="tg-wallpaper"></div>
   <div id="root"></div>
   <script type="module" src="./index.tsx"></script>
 </body>
